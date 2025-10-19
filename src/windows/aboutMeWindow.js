@@ -168,14 +168,17 @@ export function createAboutMeContent(theme = 'dark') {
 }
 
 /**
- * Inizializza typing effect per gli elementi
+ * Inizializza typing effect per gli elementi (con context specifico per finestra)
  */
-export function initTypingEffect() {
-    const typingElements = document.querySelectorAll('.typing-text');
+export function initTypingEffect(windowElement) {
+    // Se non viene passato un context, usa il documento intero (fallback)
+    const context = windowElement || document;
+    const typingElements = context.querySelectorAll('.typing-text');
     const typingSpeed = 8; // millisecondi per carattere (veloce)
     const delayBetweenSections = 150; // delay tra una sezione e l'altra
     
     let currentIndex = 0;
+    let isTyping = true; // Flag per controllare se l'animazione è attiva
 
     function typeText(element, text, callback) {
         let charIndex = 0;
@@ -204,6 +207,11 @@ export function initTypingEffect() {
         }
 
         const interval = setInterval(() => {
+            if (!isTyping) {
+                clearInterval(interval);
+                return;
+            }
+            
             if (charIndex < text.length) {
                 element.textContent = text.substring(0, charIndex + 1);
                 element.appendChild(cursor);
@@ -212,7 +220,9 @@ export function initTypingEffect() {
                 clearInterval(interval);
                 // Rimuovi cursore dopo un po'
                 setTimeout(() => {
-                    cursor.remove();
+                    if (isTyping && cursor.parentNode) {
+                        cursor.remove();
+                    }
                     if (callback) callback();
                 }, 500);
             }
@@ -220,6 +230,8 @@ export function initTypingEffect() {
     }
 
     function typeNextSection() {
+        if (!isTyping) return;
+        
         if (currentIndex < typingElements.length) {
             const element = typingElements[currentIndex];
             const text = element.dataset.text;
@@ -233,4 +245,9 @@ export function initTypingEffect() {
 
     // Avvia typing effect
     setTimeout(typeNextSection, 500);
+    
+    // Ritorna funzione di cleanup
+    return () => {
+        isTyping = false;
+    };
 }

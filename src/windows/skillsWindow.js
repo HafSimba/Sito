@@ -259,13 +259,18 @@ export function createSkillsContent(theme) {
 }
 
 /**
- * Initialize typing effect for skills window
+ * Initialize typing effect for skills window (con context specifico)
  */
-export function initSkillsTypingEffect() {
-  const typingElements = document.querySelectorAll('.typing-text');
+export function initSkillsTypingEffect(windowElement) {
+  // Se non viene passato un context, usa il documento intero (fallback)
+  const context = windowElement || document;
+  const typingElements = context.querySelectorAll('.typing-text');
   let currentIndex = 0;
+  let isTyping = true; // Flag per controllare se l'animazione è attiva
 
   function typeNextElement() {
+    if (!isTyping) return;
+    
     if (currentIndex >= typingElements.length) {
       return; // Tutte le animazioni completate
     }
@@ -288,6 +293,11 @@ export function initSkillsTypingEffect() {
     element.appendChild(cursor);
 
     const typingInterval = setInterval(() => {
+      if (!isTyping) {
+        clearInterval(typingInterval);
+        return;
+      }
+      
       if (charIndex < text.length) {
         // Inserisci il carattere prima del cursore
         const textNode = document.createTextNode(text[charIndex]);
@@ -296,7 +306,9 @@ export function initSkillsTypingEffect() {
       } else {
         clearInterval(typingInterval);
         // Rimuovi il cursore e passa al prossimo elemento
-        cursor.remove();
+        if (cursor.parentNode) {
+          cursor.remove();
+        }
         currentIndex++;
         setTimeout(typeNextElement, 100); // Piccola pausa tra elementi
       }
@@ -305,4 +317,9 @@ export function initSkillsTypingEffect() {
 
   // Inizia l'animazione dopo un piccolo delay
   setTimeout(typeNextElement, 100);
+  
+  // Ritorna funzione di cleanup
+  return () => {
+    isTyping = false;
+  };
 }

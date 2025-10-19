@@ -1011,7 +1011,8 @@ export class DesktopFullscreen {
 
             // Inizializza typing effect dopo un breve delay
             setTimeout(() => {
-                initTypingEffect();
+                const windowElement = document.getElementById(windowId);
+                initTypingEffect(windowElement);
             }, 300);
 
         } catch (error) {
@@ -1043,7 +1044,8 @@ export class DesktopFullscreen {
 
             // Inizializza typing effect dopo un breve delay
             setTimeout(() => {
-                initContactsTypingEffect();
+                const windowElement = document.getElementById(windowId);
+                initContactsTypingEffect(windowElement);
             }, 300);
 
         } catch (error) {
@@ -1075,7 +1077,8 @@ export class DesktopFullscreen {
 
             // Inizializza typing effect dopo un breve delay
             setTimeout(() => {
-                initSkillsTypingEffect();
+                const windowElement = document.getElementById(windowId);
+                initSkillsTypingEffect(windowElement);
             }, 300);
 
         } catch (error) {
@@ -1104,7 +1107,8 @@ export class DesktopFullscreen {
 
             // Inizializza typing effect dopo un breve delay
             setTimeout(() => {
-                initCVTypingEffect();
+                const windowElement = document.getElementById(windowId);
+                initCVTypingEffect(windowElement);
             }, 300);
 
         } catch (error) {

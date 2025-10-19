@@ -403,9 +403,12 @@ export function createCVContent(theme) {
   `;
 }
 
-export function initCVTypingEffect() {
-  const typingElements = document.querySelectorAll('.typing-text');
+export function initCVTypingEffect(windowElement) {
+  // Se non viene passato un context, usa il documento intero (fallback)
+  const context = windowElement || document;
+  const typingElements = context.querySelectorAll('.typing-text');
   let currentIndex = 0;
+  let isTyping = true; // Flag per controllare se l'animazione è attiva
 
   function typeText(element, text, callback) {
     let charIndex = 0;
@@ -418,19 +421,28 @@ export function initCVTypingEffect() {
     element.appendChild(cursor);
     
     const typingInterval = setInterval(() => {
+      if (!isTyping) {
+        clearInterval(typingInterval);
+        return;
+      }
+      
       if (charIndex < text.length) {
         element.textContent = text.substring(0, charIndex + 1);
         element.appendChild(cursor);
         charIndex++;
       } else {
         clearInterval(typingInterval);
-        cursor.remove();
+        if (cursor.parentNode) {
+          cursor.remove();
+        }
         if (callback) callback();
       }
     }, 8); // 8ms per carattere (veloce)
   }
 
   function typeNextElement() {
+    if (!isTyping) return;
+    
     if (currentIndex < typingElements.length) {
       const element = typingElements[currentIndex];
       const text = element.getAttribute('data-text');
@@ -441,26 +453,34 @@ export function initCVTypingEffect() {
       });
     } else {
       // Re-initialize Lucide icons after all text is typed
-      if (window.lucide) {
+      if (window.lucide && isTyping) {
         window.lucide.createIcons();
       }
     }
   }
 
-  // Add CSS animation for cursor
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes blink {
-      0%, 50% { opacity: 1; }
-      51%, 100% { opacity: 0; }
-    }
-  `;
-  document.head.appendChild(style);
+  // Add CSS animation for cursor (solo se non esiste già)
+  if (!document.getElementById('cv-typing-cursor-style')) {
+    const style = document.createElement('style');
+    style.id = 'cv-typing-cursor-style';
+    style.textContent = `
+      @keyframes blink {
+        0%, 50% { opacity: 1; }
+        51%, 100% { opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   typeNextElement();
   
   // Setup PDF download button
   setupPDFDownload();
+  
+  // Ritorna funzione di cleanup
+  return () => {
+    isTyping = false;
+  };
 }
 
 function setupPDFDownload() {
