@@ -108,7 +108,7 @@ export function createCVContent(theme) {
         </h2>
         <div style="display: grid; gap: 12px;">
           <p class="typing-text" data-text="📅 19/09/2002 MI" style="margin: 0; font-size: 15px;"></p>
-          <p class="typing-text" data-text="📍 Via Don Luigi Sturzo, 4 - Mozzate CO 22076" style="margin: 0; font-size: 15px;"></p>
+          <p class="typing-text" data-text="📍 Mozzate CO 22076" style="margin: 0; font-size: 15px;"></p>
           <p class="typing-text" data-text="✉️ gianlugiaffreda@gmail.com" style="margin: 0; font-size: 15px;"></p>
           <p class="typing-text" data-text="📱 +39 345 033 3502" style="margin: 0; font-size: 15px;"></p>
           <p class="typing-text" data-text="🚗 Automunito" style="margin: 0; font-size: 15px;"></p>
