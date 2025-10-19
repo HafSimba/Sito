@@ -47,8 +47,24 @@ class Portfolio3D {
         
         // Bind event handler per click
         this.onCanvasClickBound = (event) => this.onCanvasClick(event);
+        
+        // Setup error handling globale per iOS
+        this.setupErrorHandling();
 
         this.init();
+    }
+    
+    setupErrorHandling() {
+        // Gestione errori globali (utile per debugging su iOS)
+        window.addEventListener('error', (event) => {
+            console.error('🚨 Errore globale:', event.error);
+            // Non bloccare l'app, prova a continuare
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('🚨 Promise rejection non gestita:', event.reason);
+            event.preventDefault();
+        });
     }
 
     async init() {
@@ -90,21 +106,54 @@ class Portfolio3D {
     }
 
     setupRenderer() {
+        // Rileva dispositivi Apple
+        const isApple = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent) ||
+                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        
+        console.log(`📱 Dispositivo rilevato: ${isApple ? 'Apple' : 'Non-Apple'}, iOS: ${isIOS}`);
+
+        // Configurazione renderer ottimizzata per Apple
         this.renderer = new THREE.WebGLRenderer({
-            antialias: true,
-            alpha: true
+            antialias: !isIOS, // Disabilita antialiasing su iOS per performance
+            alpha: true,
+            powerPreference: isApple ? 'low-power' : 'high-performance', // Risparmio energetico su Apple
+            failIfMajorPerformanceCaveat: false // Non fallire se WebGL ha limitazioni
         });
         
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Ottimizzazione
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Ombre morbide
+        
+        // iOS ha devicePixelRatio molto alto (fino a 3) - limita a 1.5 per performance
+        const maxPixelRatio = isIOS ? 1.5 : 2;
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
+        
+        this.renderer.shadowMap.enabled = !isIOS; // Disabilita ombre su iOS per performance
+        if (!isIOS) {
+            this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        }
+        
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.2; // Aumentato per ambiente lightroom
+        this.renderer.toneMappingExposure = 1.2;
 
         const container = document.getElementById('canvas-container');
         container.appendChild(this.renderer.domElement);
+        
+        // Previeni context loss su iOS
+        this.renderer.domElement.addEventListener('webglcontextlost', (event) => {
+            event.preventDefault();
+            console.error('⚠️ WebGL context lost! Tentativo di recupero...');
+            setTimeout(() => {
+                this.renderer.forceContextRestore();
+            }, 1000);
+        }, false);
+        
+        this.renderer.domElement.addEventListener('webglcontextrestored', () => {
+            console.log('✅ WebGL context ripristinato!');
+        }, false);
+        
+        this.isApple = isApple;
+        this.isIOS = isIOS;
     }
 
     setupPostProcessing() {
@@ -113,7 +162,17 @@ class Portfolio3D {
             return;
         }
 
-        // Composer per post-processing effects
+        // Su iOS, riduci post-processing per performance
+        if (this.isIOS) {
+            console.log('📱 iOS rilevato: post-processing ridotto per performance');
+            // Solo render pass base, no bloom/blur pesanti
+            this.composer = new EffectComposer(this.renderer);
+            const renderPass = new RenderPass(this.scene, this.camera);
+            this.composer.addPass(renderPass);
+            return;
+        }
+
+        // Composer per post-processing effects (solo su non-iOS)
         this.composer = new EffectComposer(this.renderer);
         
         // Render pass (scena base)

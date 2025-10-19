@@ -2,12 +2,15 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
     <title>Portfolio 3D</title>
     <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" crossorigin="anonymous"></script>
     <!-- jsPDF for PDF generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
     <style>
         * {
             margin: 0;
@@ -16,15 +19,28 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             background-color: #000;
+            /* Fix per iOS Safari - previeni bounce scroll */
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            -webkit-overflow-scrolling: touch;
+            /* Previeni zoom su double tap iOS */
+            touch-action: pan-x pan-y;
         }
 
         #canvas-container {
             width: 100vw;
             height: 100vh;
+            /* iOS Safari - usa height invece di vh per evitare problemi con toolbar */
+            height: -webkit-fill-available;
             transition: opacity 1s ease-in-out;
+            /* Previeni selezione testo su iOS */
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         #canvas-container.clickable {
