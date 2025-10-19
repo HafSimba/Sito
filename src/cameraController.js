@@ -160,6 +160,8 @@ export class CameraController {
         this.isMouseDown = false; // Track se mouse/touch è premuto
         this.mouse = { x: 0, y: 0 };
         this.lastTouch = { x: 0, y: 0 }; // Per calcolare movimento touch
+        this.touchMoved = false; // Track se touch è un drag o un tap
+        this.touchStartTime = 0; // Timestamp inizio touch
         this.cameraRotation = { 
             yaw: 0,   // Rotazione orizzontale
             pitch: 0  // Rotazione verticale
@@ -208,13 +210,23 @@ export class CameraController {
         // === TOUCH EVENTS (per mobile) ===
         const onTouchStart = (event) => {
             if (event.touches.length === 1) {
-                this.isMouseDown = true;
                 const touch = event.touches[0];
+                
+                // NON intercettare touch sulla canvas (permetti click su card/UI)
+                // Solo intercetta touch su aree vuote per camera control
+                const target = event.target;
+                if (target && target.tagName !== 'CANVAS') {
+                    // Touch su elemento UI (non canvas) - non intercettare
+                    return;
+                }
+                
+                this.isMouseDown = true;
                 this.lastTouch.x = touch.clientX;
                 this.lastTouch.y = touch.clientY;
+                this.touchStartTime = Date.now();
+                this.touchMoved = false;
                 
-                // Previeni scroll su mobile durante drag
-                event.preventDefault();
+                // NON fare preventDefault qui - permetti click normali
             }
         };
 
@@ -227,36 +239,44 @@ export class CameraController {
             const movementX = touch.clientX - this.lastTouch.x;
             const movementY = touch.clientY - this.lastTouch.y;
 
+            // Se c'è movimento significativo, marca come "trascinamento camera"
+            const distance = Math.sqrt(movementX * movementX + movementY * movementY);
+            if (distance > 5) {
+                this.touchMoved = true;
+                
+                // Solo ora previeni scroll (perché è chiaramente un drag)
+                event.preventDefault();
+            }
+
             // Aggiorna posizione touch precedente
             this.lastTouch.x = touch.clientX;
             this.lastTouch.y = touch.clientY;
 
-            // Aggiorna rotazione con sensibilità touch
-            this.cameraRotation.yaw -= movementX * this.touchSensitivity;
-            this.cameraRotation.pitch -= movementY * this.touchSensitivity;
+            // Aggiorna rotazione con sensibilità touch solo se si è mosso
+            if (this.touchMoved) {
+                this.cameraRotation.yaw -= movementX * this.touchSensitivity;
+                this.cameraRotation.pitch -= movementY * this.touchSensitivity;
 
-            // Calcola velocità movimento per shake
-            this.lastMovementSpeed = Math.sqrt(movementX * movementX + movementY * movementY);
+                // Calcola velocità movimento per shake
+                this.lastMovementSpeed = Math.sqrt(movementX * movementX + movementY * movementY);
 
-            // Applica limiti rotazione
-            this.applyRotationLimits();
-
-            // Previeni scroll
-            event.preventDefault();
+                // Applica limiti rotazione
+                this.applyRotationLimits();
+            }
         };
 
         const onTouchEnd = (event) => {
-            if (event.touches.length === 0) {
-                this.isMouseDown = false;
-            }
+            // Reset stato touch
+            this.isMouseDown = false;
+            this.touchMoved = false;
         };
 
         // Registra event listeners
         document.addEventListener('mousedown', onMouseDown);
         document.addEventListener('mouseup', onMouseUp);
         document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('touchstart', onTouchStart, { passive: false });
-        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        document.addEventListener('touchstart', onTouchStart);
+        document.addEventListener('touchmove', onTouchMove, { passive: false }); // passive:false solo su move
         document.addEventListener('touchend', onTouchEnd);
         
         // Salva riferimenti per cleanup
