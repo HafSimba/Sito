@@ -24,9 +24,10 @@ export class TutorialCard {
         // Crea un gruppo per la card
         this.card = new THREE.Group();
         
-        // Dimensioni card ridotte e più compatte
-        const width = 2.2;
-        const height = 1.6;
+        // Dimensioni card - ridotte per mobile
+        const isMobile = window.innerWidth < 768;
+        const width = isMobile ? 1.6 : 2.2;
+        const height = isMobile ? 1.2 : 1.6;
         const depth = 0.04;
 
         // Geometria card (pannello rettangolare)
@@ -116,18 +117,25 @@ export class TutorialCard {
         const accentColor = '#3b82f6';
         const textColor = '#475569';
 
+        // Adatta font size in base alla larghezza (mobile vs desktop)
+        const isMobile = width < 2;
+        const titleSize = isMobile ? 0.18 : 0.22;
+        const textSize = isMobile ? 0.08 : 0.095;
+        const iconSize = isMobile ? 0.13 : 0.16;
+        const buttonSize = isMobile ? 0.10 : 0.12;
+
         // Titolo - più grande e più in alto
-        ctx.font = 'bold 0.22px "Segoe UI", system-ui, sans-serif';
+        ctx.font = `bold ${titleSize}px "Segoe UI", system-ui, sans-serif`;
         ctx.fillStyle = accentColor;
         ctx.textAlign = 'center';
-        ctx.fillText('Come Utilizzare il Sito', width / 2, 0.28);
+        ctx.fillText('Come Utilizzare il Sito', width / 2, isMobile ? 0.24 : 0.28);
 
         // Linea separatrice più in alto
         ctx.strokeStyle = accentColor;
         ctx.lineWidth = 0.012;
         ctx.beginPath();
-        ctx.moveTo(0.3, 0.42);
-        ctx.lineTo(width - 0.3, 0.42);
+        ctx.moveTo(0.3, isMobile ? 0.36 : 0.42);
+        ctx.lineTo(width - 0.3, isMobile ? 0.36 : 0.42);
         ctx.stroke();
 
         // Istruzioni - semplificate e più grandi
@@ -146,22 +154,22 @@ export class TutorialCard {
             }
         ];
 
-        let yPos = 0.58;
-        const lineHeight = 0.26;
+        let yPos = isMobile ? 0.50 : 0.58;
+        const lineHeight = isMobile ? 0.23 : 0.26;
 
         ctx.textAlign = 'left';
 
         instructions.forEach((instr, index) => {
             // Icona più grande
-            ctx.font = '0.16px Arial';
-            ctx.fillText(instr.icon, 0.25, yPos);
+            ctx.font = `${iconSize}px Arial`;
+            ctx.fillText(instr.icon, isMobile ? 0.20 : 0.25, yPos);
 
             // Testo più grande e leggibile
-            ctx.font = '0.095px "Segoe UI", system-ui, sans-serif';
+            ctx.font = `${textSize}px "Segoe UI", system-ui, sans-serif`;
             ctx.fillStyle = primaryColor;
             
             // Word wrap per testo lungo
-            const maxWidth = width - 0.6;
+            const maxWidth = width - (isMobile ? 0.50 : 0.6);
             const words = instr.text.split(' ');
             let line = '';
             let textY = yPos;
@@ -171,22 +179,22 @@ export class TutorialCard {
                 const metrics = ctx.measureText(testLine);
                 
                 if (metrics.width > maxWidth && line !== '') {
-                    ctx.fillText(line.trim(), 0.48, textY);
+                    ctx.fillText(line.trim(), isMobile ? 0.40 : 0.48, textY);
                     line = word + ' ';
-                    textY += 0.115;
+                    textY += isMobile ? 0.10 : 0.115;
                 } else {
                     line = testLine;
                 }
             });
-            ctx.fillText(line.trim(), 0.48, textY);
+            ctx.fillText(line.trim(), isMobile ? 0.40 : 0.48, textY);
 
             yPos += lineHeight;
         });
 
         // Bottone "Ho Capito" - più grande e in basso
-        const buttonY = height - 0.22;
-        const buttonWidth = 1.2;
-        const buttonHeight = 0.22;
+        const buttonY = height - (isMobile ? 0.18 : 0.22);
+        const buttonWidth = isMobile ? 0.9 : 1.2;
+        const buttonHeight = isMobile ? 0.18 : 0.22;
         const buttonX = (width - buttonWidth) / 2;
 
         // Sfondo bottone (gradiente)
@@ -207,11 +215,11 @@ export class TutorialCard {
         ctx.shadowOffsetY = 0.01;
 
         // Testo bottone più grande
-        ctx.font = 'bold 0.12px "Segoe UI", system-ui, sans-serif';
+        ctx.font = `bold ${buttonSize}px "Segoe UI", system-ui, sans-serif`;
         ctx.fillStyle = 'white';
         ctx.textAlign = 'center';
         ctx.shadowColor = 'transparent';
-        ctx.fillText('Ho Capito', width / 2, buttonY + 0.04);
+        ctx.fillText('Ho Capito', width / 2, buttonY + (isMobile ? 0.035 : 0.04));
 
         return canvas;
     }
@@ -301,8 +309,9 @@ export class TutorialCard {
         if (!this.card || !this.camera) return;
 
         // Posiziona la card davanti alla camera, ma leggermente più in alto
-        const distance = 2.5; // Distanza ridotta dalla camera (più vicina)
-        const verticalOffset = 0.3; // Offset verticale per alzarla sopra la scrivania
+        const isMobile = window.innerWidth < 768;
+        const distance = isMobile ? 1.8 : 2.5; // Più vicina su mobile per compensare dimensione ridotta
+        const verticalOffset = isMobile ? 0.2 : 0.3; // Offset verticale per alzarla sopra la scrivania
         
         const direction = new THREE.Vector3(0, 0, -1);
         direction.applyQuaternion(this.camera.quaternion);

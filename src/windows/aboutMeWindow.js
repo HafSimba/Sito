@@ -172,8 +172,8 @@ export function createAboutMeContent(theme = 'dark') {
  */
 export function initTypingEffect() {
     const typingElements = document.querySelectorAll('.typing-text');
-    const typingSpeed = 30; // millisecondi per carattere
-    const delayBetweenSections = 300; // delay tra una sezione e l'altra
+    const typingSpeed = 8; // millisecondi per carattere (veloce)
+    const delayBetweenSections = 150; // delay tra una sezione e l'altra
     
     let currentIndex = 0;
 

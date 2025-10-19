@@ -298,9 +298,9 @@ export function initSkillsTypingEffect() {
         // Rimuovi il cursore e passa al prossimo elemento
         cursor.remove();
         currentIndex++;
-        setTimeout(typeNextElement, 200); // Piccola pausa tra elementi
+        setTimeout(typeNextElement, 100); // Piccola pausa tra elementi
       }
-    }, 30); // 30ms per carattere (stesso timing dell'About Me)
+    }, 8); // 8ms per carattere (veloce)
   }
 
   // Inizia l'animazione dopo un piccolo delay

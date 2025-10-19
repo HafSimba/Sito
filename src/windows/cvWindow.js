@@ -427,7 +427,7 @@ export function initCVTypingEffect() {
         cursor.remove();
         if (callback) callback();
       }
-    }, 30);
+    }, 8); // 8ms per carattere (veloce)
   }
 
   function typeNextElement() {
@@ -437,7 +437,7 @@ export function initCVTypingEffect() {
       
       typeText(element, text, () => {
         currentIndex++;
-        setTimeout(typeNextElement, 200);
+        setTimeout(typeNextElement, 100); // Pausa ridotta tra elementi
       });
     } else {
       // Re-initialize Lucide icons after all text is typed
