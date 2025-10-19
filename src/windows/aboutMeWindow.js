@@ -181,6 +181,8 @@ export function initTypingEffect(windowElement) {
     let isTyping = true; // Flag per controllare se l'animazione è attiva
 
     function typeText(element, text, callback) {
+        if (!isTyping) return;
+        
         let charIndex = 0;
         element.textContent = '';
         
@@ -206,27 +208,37 @@ export function initTypingEffect(windowElement) {
             document.head.appendChild(style);
         }
 
-        const interval = setInterval(() => {
-            if (!isTyping) {
-                clearInterval(interval);
-                return;
-            }
+        // Usa requestAnimationFrame invece di setInterval per animazioni indipendenti
+        let lastTime = performance.now();
+        const charDuration = typingSpeed;
+        
+        function animate(currentTime) {
+            if (!isTyping) return;
             
-            if (charIndex < text.length) {
-                element.textContent = text.substring(0, charIndex + 1);
-                element.appendChild(cursor);
-                charIndex++;
+            const elapsed = currentTime - lastTime;
+            
+            if (elapsed >= charDuration) {
+                if (charIndex < text.length) {
+                    element.textContent = text.substring(0, charIndex + 1);
+                    element.appendChild(cursor);
+                    charIndex++;
+                    lastTime = currentTime;
+                    requestAnimationFrame(animate);
+                } else {
+                    // Completato - rimuovi cursore
+                    setTimeout(() => {
+                        if (isTyping && cursor.parentNode) {
+                            cursor.remove();
+                        }
+                        if (callback) callback();
+                    }, 500);
+                }
             } else {
-                clearInterval(interval);
-                // Rimuovi cursore dopo un po'
-                setTimeout(() => {
-                    if (isTyping && cursor.parentNode) {
-                        cursor.remove();
-                    }
-                    if (callback) callback();
-                }, 500);
+                requestAnimationFrame(animate);
             }
-        }, typingSpeed);
+        }
+        
+        requestAnimationFrame(animate);
     }
 
     function typeNextSection() {
@@ -243,8 +255,8 @@ export function initTypingEffect(windowElement) {
         }
     }
 
-    // Avvia typing effect
-    setTimeout(typeNextSection, 500);
+    // Avvia typing effect immediatamente (ogni finestra inizia subito)
+    setTimeout(typeNextSection, 100);
     
     // Ritorna funzione di cleanup
     return () => {

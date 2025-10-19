@@ -411,6 +411,8 @@ export function initCVTypingEffect(windowElement) {
   let isTyping = true; // Flag per controllare se l'animazione è attiva
 
   function typeText(element, text, callback) {
+    if (!isTyping) return;
+    
     let charIndex = 0;
     element.textContent = '';
     
@@ -420,24 +422,35 @@ export function initCVTypingEffect(windowElement) {
     cursor.style.animation = 'blink 1s infinite';
     element.appendChild(cursor);
     
-    const typingInterval = setInterval(() => {
-      if (!isTyping) {
-        clearInterval(typingInterval);
-        return;
-      }
+    // Usa requestAnimationFrame per animazioni indipendenti
+    let lastTime = performance.now();
+    const charDuration = 8;
+    
+    function animate(currentTime) {
+      if (!isTyping) return;
       
-      if (charIndex < text.length) {
-        element.textContent = text.substring(0, charIndex + 1);
-        element.appendChild(cursor);
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        if (cursor.parentNode) {
-          cursor.remove();
+      const elapsed = currentTime - lastTime;
+      
+      if (elapsed >= charDuration) {
+        if (charIndex < text.length) {
+          element.textContent = text.substring(0, charIndex + 1);
+          element.appendChild(cursor);
+          charIndex++;
+          lastTime = currentTime;
+          requestAnimationFrame(animate);
+        } else {
+          // Completato
+          if (cursor.parentNode) {
+            cursor.remove();
+          }
+          if (callback) callback();
         }
-        if (callback) callback();
+      } else {
+        requestAnimationFrame(animate);
       }
-    }, 8); // 8ms per carattere (veloce)
+    }
+    
+    requestAnimationFrame(animate);
   }
 
   function typeNextElement() {
@@ -472,7 +485,8 @@ export function initCVTypingEffect(windowElement) {
     document.head.appendChild(style);
   }
 
-  typeNextElement();
+  // Inizia immediatamente
+  setTimeout(typeNextElement, 50);
   
   // Setup PDF download button
   setupPDFDownload();

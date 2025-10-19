@@ -1009,11 +1009,11 @@ export class DesktopFullscreen {
             
             console.log('✅ Finestra About Me creata con ID:', windowId);
 
-            // Inizializza typing effect dopo un breve delay
+            // Inizializza typing effect subito
             setTimeout(() => {
                 const windowElement = document.getElementById(windowId);
                 initTypingEffect(windowElement);
-            }, 300);
+            }, 100);
 
         } catch (error) {
             console.error('❌ Errore apertura finestra About Me:', error);
@@ -1042,11 +1042,11 @@ export class DesktopFullscreen {
             
             console.log('✅ Finestra Contatti creata con ID:', windowId);
 
-            // Inizializza typing effect dopo un breve delay
+            // Inizializza typing effect subito
             setTimeout(() => {
                 const windowElement = document.getElementById(windowId);
                 initContactsTypingEffect(windowElement);
-            }, 300);
+            }, 100);
 
         } catch (error) {
             console.error('❌ Errore apertura finestra Contatti:', error);
@@ -1075,11 +1075,11 @@ export class DesktopFullscreen {
             
             console.log('✅ Finestra Skills creata con ID:', windowId);
 
-            // Inizializza typing effect dopo un breve delay
+            // Inizializza typing effect subito
             setTimeout(() => {
                 const windowElement = document.getElementById(windowId);
                 initSkillsTypingEffect(windowElement);
-            }, 300);
+            }, 100);
 
         } catch (error) {
             console.error('❌ Errore apertura finestra Skills:', error);
@@ -1105,11 +1105,11 @@ export class DesktopFullscreen {
             
             console.log('✅ Finestra CV creata con ID:', windowId);
 
-            // Inizializza typing effect dopo un breve delay
+            // Inizializza typing effect subito
             setTimeout(() => {
                 const windowElement = document.getElementById(windowId);
                 initCVTypingEffect(windowElement);
-            }, 300);
+            }, 100);
 
         } catch (error) {
             console.error('❌ Errore apertura finestra CV:', error);

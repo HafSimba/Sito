@@ -283,31 +283,40 @@ export function initContactsTypingEffect(windowElement) {
     cursor.className = 'typing-cursor';
     element.appendChild(cursor);
 
-    const typingInterval = setInterval(() => {
-      if (!isTyping) {
-        clearInterval(typingInterval);
-        return;
-      }
+    // Usa requestAnimationFrame per animazioni indipendenti
+    let lastTime = performance.now();
+    const charDuration = 8;
+    
+    function animate(currentTime) {
+      if (!isTyping) return;
       
-      if (charIndex < text.length) {
-        // Inserisci il carattere prima del cursore
-        const textNode = document.createTextNode(text[charIndex]);
-        element.insertBefore(textNode, cursor);
-        charIndex++;
-      } else {
-        clearInterval(typingInterval);
-        // Rimuovi il cursore e passa al prossimo elemento
-        if (cursor.parentNode) {
-          cursor.remove();
+      const elapsed = currentTime - lastTime;
+      
+      if (elapsed >= charDuration) {
+        if (charIndex < text.length) {
+          const textNode = document.createTextNode(text[charIndex]);
+          element.insertBefore(textNode, cursor);
+          charIndex++;
+          lastTime = currentTime;
+          requestAnimationFrame(animate);
+        } else {
+          // Completato
+          if (cursor.parentNode) {
+            cursor.remove();
+          }
+          currentIndex++;
+          setTimeout(typeNextElement, 100);
         }
-        currentIndex++;
-        setTimeout(typeNextElement, 100); // Piccola pausa tra elementi
+      } else {
+        requestAnimationFrame(animate);
       }
-    }, 8); // 8ms per carattere (veloce)
+    }
+    
+    requestAnimationFrame(animate);
   }
 
-  // Inizia l'animazione dopo un piccolo delay
-  setTimeout(typeNextElement, 100);
+  // Inizia l'animazione immediatamente
+  setTimeout(typeNextElement, 50);
   
   // Ritorna funzione di cleanup
   return () => {
