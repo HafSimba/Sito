@@ -153,23 +153,30 @@ export class CameraController {
     }
 
     /**
-     * Abilita controllo vista prima persona (mouse guarda intorno)
+     * Abilita controllo vista prima persona (mouse e touch)
      */
     enableFirstPersonView() {
         this.isFirstPerson = true;
-        this.isMouseDown = false; // Track se mouse è premuto
+        this.isMouseDown = false; // Track se mouse/touch è premuto
         this.mouse = { x: 0, y: 0 };
+        this.lastTouch = { x: 0, y: 0 }; // Per calcolare movimento touch
         this.cameraRotation = { 
             yaw: 0,   // Rotazione orizzontale
             pitch: 0  // Rotazione verticale
         };
 
-        // Sensibilità mouse
-        this.sensitivity = 0.002;
+        // Sensibilità controlli
+        this.sensitivity = 0.002;        // Mouse
+        this.touchSensitivity = 0.003;   // Touch (leggermente più sensibile)
 
-        // Event listener per mouse down/up
+        // Effetto shake per realismo POV
+        this.shakeIntensity = 0.001;     // Intensità shake
+        this.shakeOffset = { x: 0, y: 0, z: 0 };
+        this.shakeDecay = 0.9;           // Quanto velocemente si attenua
+        this.lastMovementSpeed = 0;      // Per calcolare velocità movimento
+
+        // === MOUSE EVENTS ===
         const onMouseDown = (event) => {
-            // Solo click sinistro
             if (event.button === 0) {
                 this.isMouseDown = true;
             }
@@ -181,9 +188,8 @@ export class CameraController {
             }
         };
 
-        // Event listener per mouse movimento
         const onMouseMove = (event) => {
-            if (!this.isFirstPerson || !this.isMouseDown) return; // Solo se mouse premuto
+            if (!this.isFirstPerson || !this.isMouseDown) return;
 
             const movementX = event.movementX || 0;
             const movementY = event.movementY || 0;
@@ -192,25 +198,115 @@ export class CameraController {
             this.cameraRotation.yaw -= movementX * this.sensitivity;
             this.cameraRotation.pitch -= movementY * this.sensitivity;
 
-            // Limita rotazione a ±60 gradi (circa 1.047 radianti) per mantenere focus sul monitor
-            const maxYaw = Math.PI / 3;    // 60 gradi orizzontale
-            const maxPitch = Math.PI / 3;  // 60 gradi verticale
+            // Calcola velocità movimento per shake
+            this.lastMovementSpeed = Math.sqrt(movementX * movementX + movementY * movementY);
 
-            this.cameraRotation.yaw = Math.max(-maxYaw, Math.min(maxYaw, this.cameraRotation.yaw));
-            this.cameraRotation.pitch = Math.max(-maxPitch, Math.min(maxPitch, this.cameraRotation.pitch));
+            // Applica limiti rotazione
+            this.applyRotationLimits();
         };
 
+        // === TOUCH EVENTS (per mobile) ===
+        const onTouchStart = (event) => {
+            if (event.touches.length === 1) {
+                this.isMouseDown = true;
+                const touch = event.touches[0];
+                this.lastTouch.x = touch.clientX;
+                this.lastTouch.y = touch.clientY;
+                
+                // Previeni scroll su mobile durante drag
+                event.preventDefault();
+            }
+        };
+
+        const onTouchMove = (event) => {
+            if (!this.isFirstPerson || !this.isMouseDown || event.touches.length !== 1) return;
+
+            const touch = event.touches[0];
+            
+            // Calcola movimento dal frame precedente
+            const movementX = touch.clientX - this.lastTouch.x;
+            const movementY = touch.clientY - this.lastTouch.y;
+
+            // Aggiorna posizione touch precedente
+            this.lastTouch.x = touch.clientX;
+            this.lastTouch.y = touch.clientY;
+
+            // Aggiorna rotazione con sensibilità touch
+            this.cameraRotation.yaw -= movementX * this.touchSensitivity;
+            this.cameraRotation.pitch -= movementY * this.touchSensitivity;
+
+            // Calcola velocità movimento per shake
+            this.lastMovementSpeed = Math.sqrt(movementX * movementX + movementY * movementY);
+
+            // Applica limiti rotazione
+            this.applyRotationLimits();
+
+            // Previeni scroll
+            event.preventDefault();
+        };
+
+        const onTouchEnd = (event) => {
+            if (event.touches.length === 0) {
+                this.isMouseDown = false;
+            }
+        };
+
+        // Registra event listeners
         document.addEventListener('mousedown', onMouseDown);
         document.addEventListener('mouseup', onMouseUp);
         document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('touchstart', onTouchStart, { passive: false });
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        document.addEventListener('touchend', onTouchEnd);
         
         // Salva riferimenti per cleanup
-        this.firstPersonMouseHandler = onMouseMove;
         this.firstPersonMouseDownHandler = onMouseDown;
         this.firstPersonMouseUpHandler = onMouseUp;
+        this.firstPersonMouseHandler = onMouseMove;
+        this.firstPersonTouchStartHandler = onTouchStart;
+        this.firstPersonTouchMoveHandler = onTouchMove;
+        this.firstPersonTouchEndHandler = onTouchEnd;
 
-        console.log('💡 Tieni premuto il tasto sinistro del mouse e muovi per guardarti intorno');
-        console.log('📐 Rotazione limitata a ±60° per mantenere focus sul monitor');
+        console.log('💡 Desktop: Tieni premuto il mouse e muovi per guardarti intorno');
+        console.log('📱 Mobile: Tocca e trascina per guardarti intorno');
+        console.log('📐 Rotazione limitata a ±60° con effetto shake POV');
+    }
+
+    /**
+     * Applica limiti alla rotazione camera
+     */
+    applyRotationLimits() {
+        const maxYaw = Math.PI / 3;    // 60 gradi orizzontale
+        const maxPitch = Math.PI / 3;  // 60 gradi verticale
+
+        this.cameraRotation.yaw = Math.max(-maxYaw, Math.min(maxYaw, this.cameraRotation.yaw));
+        this.cameraRotation.pitch = Math.max(-maxPitch, Math.min(maxPitch, this.cameraRotation.pitch));
+    }
+
+    /**
+     * Applica effetto shake alla camera basato sul movimento
+     */
+    applyShakeEffect() {
+        if (this.lastMovementSpeed > 0) {
+            // Crea shake casuale proporzionale alla velocità
+            const intensity = this.shakeIntensity * this.lastMovementSpeed;
+            
+            this.shakeOffset.x += (Math.random() - 0.5) * intensity;
+            this.shakeOffset.y += (Math.random() - 0.5) * intensity;
+            this.shakeOffset.z += (Math.random() - 0.5) * intensity * 0.5; // Meno shake in profondità
+        }
+
+        // Applica decay (attenua shake nel tempo)
+        this.shakeOffset.x *= this.shakeDecay;
+        this.shakeOffset.y *= this.shakeDecay;
+        this.shakeOffset.z *= this.shakeDecay;
+
+        // Decay della velocità
+        this.lastMovementSpeed *= 0.8;
+
+        // Applica shake alla rotazione camera
+        this.camera.rotation.x += this.shakeOffset.x;
+        this.camera.rotation.y += this.shakeOffset.y;
     }
 
     /**
@@ -220,6 +316,7 @@ export class CameraController {
         this.isFirstPerson = false;
         this.isMouseDown = false;
         
+        // Rimuovi event listeners mouse
         if (this.firstPersonMouseHandler) {
             document.removeEventListener('mousemove', this.firstPersonMouseHandler);
             this.firstPersonMouseHandler = null;
@@ -231,6 +328,20 @@ export class CameraController {
         if (this.firstPersonMouseUpHandler) {
             document.removeEventListener('mouseup', this.firstPersonMouseUpHandler);
             this.firstPersonMouseUpHandler = null;
+        }
+
+        // Rimuovi event listeners touch
+        if (this.firstPersonTouchStartHandler) {
+            document.removeEventListener('touchstart', this.firstPersonTouchStartHandler);
+            this.firstPersonTouchStartHandler = null;
+        }
+        if (this.firstPersonTouchMoveHandler) {
+            document.removeEventListener('touchmove', this.firstPersonTouchMoveHandler);
+            this.firstPersonTouchMoveHandler = null;
+        }
+        if (this.firstPersonTouchEndHandler) {
+            document.removeEventListener('touchend', this.firstPersonTouchEndHandler);
+            this.firstPersonTouchEndHandler = null;
         }
     }
 
@@ -279,6 +390,9 @@ export class CameraController {
             this.camera.rotation.order = 'YXZ';
             this.camera.rotation.y = this.cameraRotation.yaw;
             this.camera.rotation.x = this.cameraRotation.pitch;
+
+            // Applica effetto shake per realismo POV
+            this.applyShakeEffect();
         }
     }
 
