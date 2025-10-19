@@ -16,6 +16,7 @@ export class DesktopFullscreen {
         this.isActive = false;
         this.theme = 'dark'; // 'dark' o 'light'
         this.menuOpen = false;
+        this.aiChatOpen = false;
         this.windowManager = new WindowManager(this.theme, (windows) => {
             this.updateTaskbarWindows(windows);
         });
@@ -107,28 +108,177 @@ export class DesktopFullscreen {
                     <i data-lucide="menu" style="width: 24px; height: 24px;"></i>
                 </button>
 
-                <!-- Search Bar -->
-                <div id="search-container" style="
-                    flex: 1;
-                    max-width: 400px;
-                    height: 38px;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 8px;
+                <!-- AI Assistant Button -->
+                <button id="ai-assistant-btn" style="
+                    width: 48px;
+                    height: 48px;
+                    min-width: 48px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border: none;
+                    border-radius: 12px;
+                    color: white;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
                     display: flex;
                     align-items: center;
-                    padding: 0 15px;
-                    gap: 10px;
+                    justify-content: center;
+                    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                    position: relative;
+                " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(102, 126, 234, 0.5)'" 
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)'">
+                    <i data-lucide="bot" style="width: 24px; height: 24px;"></i>
+                    <!-- Indicatore "coming soon" -->
+                    <div style="
+                        position: absolute;
+                        top: -6px;
+                        right: -6px;
+                        width: 18px;
+                        height: 18px;
+                        background: #ef4444;
+                        border-radius: 50%;
+                        border: 2px solid rgba(0, 0, 0, 0.6);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 10px;
+                        font-weight: bold;
+                    ">!</div>
+                </button>
+
+                <!-- AI Chat Box (hidden by default) -->
+                <div id="ai-chat-box" style="
+                    position: absolute;
+                    bottom: 70px;
+                    left: 70px;
+                    width: 400px;
+                    max-width: calc(100vw - 90px);
+                    height: 500px;
+                    max-height: calc(100vh - 150px);
+                    background: rgba(20, 20, 40, 0.98);
+                    backdrop-filter: blur(30px);
+                    border-radius: 16px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    display: none;
+                    flex-direction: column;
+                    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
+                    transform: scale(0.95);
+                    transform-origin: bottom left;
+                    opacity: 0;
+                    transition: all 0.3s ease;
+                    z-index: 1000;
                 ">
-                    <i data-lucide="search" style="width: 16px; height: 16px; color: rgba(255,255,255,0.6); min-width: 16px;"></i>
-                    <input id="search-input" type="text" placeholder="Cerca..." style="
+                    <!-- Chat Header -->
+                    <div style="
+                        padding: 20px;
+                        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+                        border-radius: 16px 16px 0 0;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="
+                                width: 40px;
+                                height: 40px;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                border-radius: 10px;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            ">
+                                <i data-lucide="bot" style="width: 24px; height: 24px; color: white;"></i>
+                            </div>
+                            <div>
+                                <h3 style="
+                                    color: white;
+                                    margin: 0;
+                                    font-size: 16px;
+                                    font-weight: 600;
+                                ">Bittron AI</h3>
+                                <p style="
+                                    color: rgba(255, 255, 255, 0.6);
+                                    margin: 0;
+                                    font-size: 12px;
+                                ">Il mio assistente virtuale</p>
+                            </div>
+                        </div>
+                        <button id="close-ai-chat-btn" style="
+                            width: 32px;
+                            height: 32px;
+                            background: rgba(255, 255, 255, 0.1);
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            transition: all 0.2s;
+                        " onmouseover="this.style.background='rgba(255,255,255,0.2)'" 
+                           onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                            <i data-lucide="x" style="width: 18px; height: 18px; color: white;"></i>
+                        </button>
+                    </div>
+
+                    <!-- Chat Content -->
+                    <div style="
                         flex: 1;
-                        background: transparent;
-                        border: none;
-                        outline: none;
-                        color: white;
-                        font-size: 14px;
-                        min-width: 0;
-                    " />
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 40px;
+                        text-align: center;
+                    ">
+                        <div style="
+                            width: 120px;
+                            height: 120px;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin-bottom: 24px;
+                            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+                        ">
+                            <i data-lucide="bot" style="width: 64px; height: 64px; color: white;"></i>
+                        </div>
+                        
+                        <h2 style="
+                            color: white;
+                            font-size: 24px;
+                            font-weight: 700;
+                            margin: 0 0 12px 0;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            -webkit-background-clip: text;
+                            -webkit-text-fill-color: transparent;
+                            background-clip: text;
+                        ">Bittron Coming Soon</h2>
+                        
+                        <p style="
+                            color: rgba(255, 255, 255, 0.7);
+                            font-size: 16px;
+                            line-height: 1.6;
+                            margin: 0 0 24px 0;
+                        ">Il mio assistente AI personale<br/>sarà presto disponibile per rispondere<br/>a tutte le tue domande su di me!</p>
+                        
+                        <div style="
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 8px;
+                            padding: 12px 24px;
+                            background: rgba(102, 126, 234, 0.2);
+                            border: 1px solid rgba(102, 126, 234, 0.4);
+                            border-radius: 8px;
+                        ">
+                            <i data-lucide="sparkles" style="width: 18px; height: 18px; color: #667eea;"></i>
+                            <span style="
+                                color: rgba(255, 255, 255, 0.8);
+                                font-size: 14px;
+                                font-weight: 500;
+                            ">Powered by AI</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Finestre Aperte (taskbar icons) -->
@@ -330,12 +480,22 @@ export class DesktopFullscreen {
                     min-width: 40px !important;
                 }
                 
-                #search-container {
-                    max-width: none !important;
+                /* AI Assistant Button responsive */
+                #ai-assistant-btn {
+                    width: 40px !important;
+                    height: 40px !important;
+                    min-width: 40px !important;
                 }
-                
-                #search-input::placeholder {
-                    content: 'Cerca...' !important;
+
+                /* AI Chat Box responsive */
+                #ai-chat-box {
+                    left: 5px !important;
+                    right: 5px !important;
+                    bottom: 60px !important;
+                    width: auto !important;
+                    max-width: none !important;
+                    height: 70vh !important;
+                    max-height: 70vh !important;
                 }
                 
                 #taskbar-spacer {
@@ -724,11 +884,37 @@ export class DesktopFullscreen {
             });
         });
 
-        // Search input
-        const searchInput = document.getElementById('search-input');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.handleSearch(e.target.value);
+        // AI Assistant Button
+        const aiAssistantBtn = document.getElementById('ai-assistant-btn');
+        const aiChatBox = document.getElementById('ai-chat-box');
+        const closeAiChatBtn = document.getElementById('close-ai-chat-btn');
+        
+        if (aiAssistantBtn && aiChatBox) {
+            aiAssistantBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleAIChat();
+            });
+
+            // Close AI chat button
+            if (closeAiChatBtn) {
+                closeAiChatBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggleAIChat();
+                });
+            }
+
+            // Close AI chat when clicking outside
+            document.addEventListener('click', (e) => {
+                if (this.aiChatOpen && 
+                    !aiChatBox.contains(e.target) && 
+                    !aiAssistantBtn.contains(e.target)) {
+                    this.toggleAIChat();
+                }
+            });
+
+            // Prevent close when clicking inside chat
+            aiChatBox.addEventListener('click', (e) => {
+                e.stopPropagation();
             });
         }
 
@@ -1136,17 +1322,41 @@ export class DesktopFullscreen {
         }
     }
 
+    toggleAIChat() {
+        const aiChatBox = document.getElementById('ai-chat-box');
+        if (!aiChatBox) return;
+
+        this.aiChatOpen = !this.aiChatOpen;
+
+        if (this.aiChatOpen) {
+            // Chiudi il menu se aperto
+            if (this.menuOpen) {
+                this.toggleStartMenu();
+            }
+
+            aiChatBox.style.display = 'flex';
+            setTimeout(() => {
+                aiChatBox.style.opacity = '1';
+                aiChatBox.style.transform = 'scale(1)';
+                
+                // Reinizializza icone Lucide nel chat box
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }, 10);
+        } else {
+            aiChatBox.style.opacity = '0';
+            aiChatBox.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                aiChatBox.style.display = 'none';
+            }, 300);
+        }
+    }
+
     setTheme(theme) {
         this.theme = theme;
         this.windowManager.updateTheme(theme);
         console.log('🎨 Tema cambiato:', theme);
-        // TODO: Applicare tema alle future modali
-    }
-
-    handleSearch(query) {
-        if (query.length < 2) return;
-        console.log('🔍 Ricerca:', query);
-        // TODO: Implementare ricerca contenuti
     }
 
     animateEntrance() {
