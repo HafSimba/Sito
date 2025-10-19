@@ -59,7 +59,7 @@ export function createCVContent(theme) {
         border-bottom: 2px solid ${borderColor};
       ">
         <img 
-          src="./src/windows/images/ImmagineProfilo.jpg" 
+          src="/images/ImmagineProfilo.jpg" 
           alt="Gianluca Giaffreda"
           style="
             width: 120px;
